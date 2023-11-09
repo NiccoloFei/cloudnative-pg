@@ -32,6 +32,16 @@ import (
 // backupLog is for logging in this package.
 var backupLog = log.WithName("backup-resource").WithValues("version", "v1")
 
+const missingVolumeSnapshotCRDMessage = "Cannot use volumeSnapshot backup method due to missing " +
+	"VolumeSnapshot CRD. If you installed the CRD after having " +
+	"started the operator, please restart it to enable " +
+	"VolumeSnapshot support"
+
+const missingVolumeGroupSnapshotCRDMessage = "Cannot use volumeGroupSnapshot backup method due to missing " +
+	"VolumeSnapshot CRD. If you installed the CRD after having " +
+	"started the operator, please restart it to enable " +
+	"VolumeSnapshot support"
+
 // SetupWebhookWithManager setup the webhook inside the controller manager
 func (r *Backup) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -85,10 +95,15 @@ func (r *Backup) validate() field.ErrorList {
 		result = append(result, field.Invalid(
 			field.NewPath("spec", "method"),
 			r.Spec.Method,
-			"Cannot use volumeSnapshot backup method due to missing "+
-				"VolumeSnapshot CRD. If you installed the CRD after having "+
-				"started the operator, please restart it to enable "+
-				"VolumeSnapshot support",
+			missingVolumeSnapshotCRDMessage,
+		))
+	}
+
+	if r.Spec.Method == BackupMethodVolumeGroupSnapshot && !utils.HaveVolumeGroupSnapshot() {
+		result = append(result, field.Invalid(
+			field.NewPath("spec", "method"),
+			r.Spec.Method,
+			missingVolumeGroupSnapshotCRDMessage,
 		))
 	}
 

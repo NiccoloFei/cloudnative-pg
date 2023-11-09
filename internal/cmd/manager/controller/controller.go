@@ -199,6 +199,10 @@ func RunController(
 		setupLog.Error(err, "unable to detect the if the cluster have the VolumeSnapshot CRD installed")
 		return err
 	}
+	if err = utils.DetectVolumeGroupSnapshotExist(discoveryClient); err != nil {
+		setupLog.Error(err, "unable to detect the if the cluster have the VolumeGroupSnapshot CRD installed")
+		return err
+	}
 
 	// Detect if we support SeccompProfile
 	if err = utils.DetectSeccompSupport(discoveryClient); err != nil {
@@ -216,7 +220,8 @@ func RunController(
 		"systemUID", utils.GetKubeSystemUID(),
 		"haveSCC", utils.HaveSecurityContextConstraints(),
 		"haveSeccompProfile", utils.HaveSeccompSupport(),
-		"haveVolumeSnapshot", utils.HaveVolumeSnapshot())
+		"haveVolumeSnapshot", utils.HaveVolumeSnapshot(),
+		"haveVolumeGroupSnapshot", utils.HaveVolumeGroupSnapshot())
 
 	if err := ensurePKI(ctx, kubeClient, webhookServer.Options.CertDir); err != nil {
 		return err

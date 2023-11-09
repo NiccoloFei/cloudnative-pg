@@ -401,8 +401,11 @@ VOLNAME
 Valerio
 ValidationError
 VirtualBox
+VolumeGroupSnapshotClass
+VolumeGroupSnapshotConfiguration
 VolumeSnapshot
 VolumeSnapshotClass
+VolumeSnapshotCommonConfiguration
 VolumeSnapshotConfiguration
 VolumeSnapshots
 WAL
@@ -1158,6 +1161,7 @@ valueFrom
 viceversa
 virtualized
 virtualxid
+volumeGroupSnapshot
 volumeMode
 volumeMounts
 volumeSnapshot

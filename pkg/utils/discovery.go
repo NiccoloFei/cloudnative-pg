@@ -33,6 +33,9 @@ var haveSCC bool
 // haveVolumeSnapshot stores the result of the VolumeSnapshotExist function
 var haveVolumeSnapshot bool
 
+// haveVolumeGroupSnapshot stores the result of the VolumeSnapshotExist function
+var haveVolumeGroupSnapshot bool
+
 // supportSeccomp specifies whether we should set the SeccompProfile or not in the pods
 var supportSeccomp bool
 
@@ -110,6 +113,29 @@ func DetectVolumeSnapshotExist(client discovery.DiscoveryInterface) (err error) 
 // IMPORTANT: use it only in the unit tests
 func SetVolumeSnapshot(value bool) {
 	haveVolumeSnapshot = value
+}
+
+// HaveVolumeGroupSnapshot returns true if we're running under a system that implements
+// having the VolumeGroupSnapshot CRD
+func HaveVolumeGroupSnapshot() bool {
+	return haveVolumeGroupSnapshot
+}
+
+// DetectVolumeGroupSnapshotExist connects to the discovery API and find out if
+// the VolumeGroupSnapshot CRD exist in the cluster
+func DetectVolumeGroupSnapshotExist(client discovery.DiscoveryInterface) (err error) {
+	haveVolumeGroupSnapshot, err = resourceExist(client, "groupsnapshot.storage.k8s.io/v1alpha1", "volumegroupsnapshots")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SetVolumeGroupSnapshot set the haveVolumeGroupSnapshot variable to a specific value for testing purposes
+// IMPORTANT: use it only in the unit tests
+func SetVolumeGroupSnapshot(value bool) {
+	haveVolumeGroupSnapshot = value
 }
 
 // HaveVolumeSnapshot returns true if we're running under a system that implements

@@ -85,9 +85,12 @@ func NewBackupReconciler(mgr manager.Manager, discoveryClient *discovery.Discove
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=backups/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=postgresql.cnpg.io,resources=clusters,verbs=get
 // +kubebuilder:rbac:groups=snapshot.storage.k8s.io,resources=volumesnapshots,verbs=get;create;watch;list;patch
+// +kubebuilder:rbac:groups=groupsnapshot.storage.k8s.io,resources=volumegroupsnapshots,verbs=get;create;watch;list;patch
+// +kubebuilder:rbac:groups=groupsnapshot.storage.k8s.io,resources=volumegroupsnapshotcontents,verbs=get;watch;list
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups="",resources=pods/exec,verbs=get;list;delete;patch;create;watch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get
+// +kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;list;watch
 
 // Reconcile is the main reconciliation loop
 // nolint: gocognit
@@ -136,11 +139,20 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, nil
 	}
 
-	// This check is still needed for when the backup resource creation is forced through the webhook
+	// This checks are still needed because the backup resource creation could be forced through the webhook
+
 	if backup.Spec.Method == apiv1.BackupMethodVolumeSnapshot && !utils.HaveVolumeSnapshot() {
 		message := "cannot proceed with the backup as the Kubernetes cluster has no VolumeSnapshot support"
 		contextLogger.Warning(message)
 		r.Recorder.Event(&backup, "Warning", "ClusterHasNoVolumeSnapshotCRD", message)
+		tryFlagBackupAsFailed(ctx, r.Client, &backup, errors.New(message))
+		return ctrl.Result{}, nil
+	}
+
+	if backup.Spec.Method == apiv1.BackupMethodVolumeGroupSnapshot && !utils.HaveVolumeGroupSnapshot() {
+		message := "cannot proceed with the backup as the Kubernetes cluster has no VolumeGroupSnapshot support"
+		contextLogger.Warning(message)
+		r.Recorder.Event(&backup, "Warning", "ClusterHasNoVolumeGroupSnapshotCRD", message)
 		tryFlagBackupAsFailed(ctx, r.Client, &backup, errors.New(message))
 		return ctrl.Result{}, nil
 	}
@@ -206,10 +218,14 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			tryFlagBackupAsFailed(ctx, r.Client, &backup, fmt.Errorf("encountered an error while taking the backup: %w", err))
 			return ctrl.Result{}, nil
 		}
+
+	case apiv1.BackupMethodVolumeGroupSnapshot:
+		fallthrough
+
 	case apiv1.BackupMethodVolumeSnapshot:
-		if cluster.Spec.Backup.VolumeSnapshot == nil {
+		if backup.GetVolumeSnapshotCommonConfiguration(&cluster) == nil {
 			tryFlagBackupAsFailed(ctx, r.Client, &backup,
-				errors.New("no volumeSnapshot section defined on the target cluster"))
+				errors.New("no volumeSnapshot or volumeGroupSnapshot section defined on the target cluster"))
 			return ctrl.Result{}, nil
 		}
 
@@ -220,6 +236,7 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		if res != nil {
 			return *res, nil
 		}
+
 	default:
 		return ctrl.Result{}, fmt.Errorf("unrecognized method: %s", backup.Spec.Method)
 	}
@@ -333,7 +350,7 @@ func (r *BackupReconciler) reconcileSnapshotBackup(
 		return &ctrl.Result{}, nil
 	}
 
-	ctx = log.IntoContext(ctx, contextLogger.WithValues("targetPod", targetPod))
+	ctx = log.IntoContext(ctx, contextLogger.WithValues("targetPodName", targetPod.Name))
 
 	// Validate we don't have other running backups
 	var clusterBackups apiv1.BackupList
