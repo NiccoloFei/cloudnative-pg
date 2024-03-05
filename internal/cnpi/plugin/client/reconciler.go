@@ -23,95 +23,147 @@ import (
 	"slices"
 	"time"
 
-	"github.com/cloudnative-pg/cnpg-i/pkg/operator"
+	"github.com/cloudnative-pg/cnpg-i/pkg/reconciler"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/cloudnative-pg/cloudnative-pg/pkg/management/log"
 )
 
-func (data *data) PreReconcile(ctx context.Context, cluster client.Object) (ctrl.Result, error) {
+// newContinueResult returns a result instructing the reconciliation loop
+// to continue its operation
+func newContinueResult() ReconcilerHookResult { return ReconcilerHookResult{} }
+
+// newTerminateResult returns a result instructing the reconciliation loop to stop
+// reconciliation
+func newTerminateResult() ReconcilerHookResult { return ReconcilerHookResult{StopReconciliation: true} }
+
+// newReconcilerRequeueResult creates a new result instructing
+// a reconciler to schedule a loop in the passed time frame
+func newReconcilerRequeueResult(after int64) ReconcilerHookResult {
+	return ReconcilerHookResult{
+		Err:                nil,
+		StopReconciliation: true,
+		Result:             ctrl.Result{Requeue: true, RequeueAfter: time.Second * time.Duration(after)},
+	}
+}
+
+// newReconcilerErrorResult creates a new result from an error
+func newReconcilerErrorResult(err error) ReconcilerHookResult {
+	return ReconcilerHookResult{Err: err, StopReconciliation: true}
+}
+
+func (data *data) PreReconcile(ctx context.Context, cluster client.Object, object client.Object) ReconcilerHookResult {
 	return reconcilerHook(
 		ctx,
 		cluster,
+		object,
 		data.plugins,
-		operator.OperatorCapability_RPC_TYPE_PRE_RECONCILE,
-		func(serializedCluster []byte) *operator.OperatorPreReconcileRequest {
-			return &operator.OperatorPreReconcileRequest{
-				ClusterDefinition: serializedCluster,
-			}
-		},
 		func(
 			ctx context.Context,
-			plugin operator.OperatorClient,
-			request *operator.OperatorPreReconcileRequest,
-		) (hookResult, error) {
-			return plugin.PreReconcile(ctx, request)
+			plugin reconciler.ReconcilerHooksClient,
+			request *reconciler.ReconcilerHooksRequest,
+		) (*reconciler.ReconcilerHooksResult, error) {
+			return plugin.Pre(ctx, request)
 		},
 	)
 }
 
-func (data *data) PostReconcile(ctx context.Context, cluster client.Object) (ctrl.Result, error) {
+func (data *data) PostReconcile(ctx context.Context, cluster client.Object, object client.Object) ReconcilerHookResult {
 	return reconcilerHook(
 		ctx,
 		cluster,
+		object,
 		data.plugins,
-		operator.OperatorCapability_RPC_TYPE_POST_RECONCILE,
-		func(serializedCluster []byte) *operator.OperatorPostReconcileRequest {
-			return &operator.OperatorPostReconcileRequest{
-				ClusterDefinition: serializedCluster,
-			}
-		},
 		func(
 			ctx context.Context,
-			plugin operator.OperatorClient,
-			request *operator.OperatorPostReconcileRequest,
-		) (hookResult, error) {
-			return plugin.PostReconcile(ctx, request)
+			plugin reconciler.ReconcilerHooksClient,
+			request *reconciler.ReconcilerHooksRequest,
+		) (*reconciler.ReconcilerHooksResult, error) {
+			return plugin.Post(ctx, request)
 		},
 	)
 }
 
-type hookResult interface {
-	GetRequeue() bool
-	GetRequeueAfter() int64
-}
+type reconcilerHookFunc func(
+	ctx context.Context,
+	plugin reconciler.ReconcilerHooksClient,
+	request *reconciler.ReconcilerHooksRequest,
+) (*reconciler.ReconcilerHooksResult, error)
 
-func reconcilerHook[T any](
+func reconcilerHook(
 	ctx context.Context,
 	cluster client.Object,
+	object client.Object,
 	plugins []pluginData,
-	capability operator.OperatorCapability_RPC_Type,
-	createRequest func(cluster []byte) T,
-	executeRequest func(ctx context.Context, plugin operator.OperatorClient, request T) (hookResult, error),
-) (ctrl.Result, error) {
+	executeRequest reconcilerHookFunc,
+) ReconcilerHookResult {
+	contextLogger := log.FromContext(ctx)
+
 	serializedCluster, err := json.Marshal(cluster)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("while serializing %s %s/%s to JSON: %w",
-			cluster.GetObjectKind().GroupVersionKind().Kind,
-			cluster.GetNamespace(), cluster.GetName(),
-			err,
+		return newReconcilerErrorResult(
+			fmt.Errorf("while serializing %s %s/%s to JSON: %w",
+				cluster.GetObjectKind().GroupVersionKind().Kind,
+				cluster.GetNamespace(), cluster.GetName(),
+				err,
+			),
 		)
 	}
 
-	request := createRequest(serializedCluster)
+	serializedObject, err := json.Marshal(object)
+	if err != nil {
+		return newReconcilerErrorResult(
+			fmt.Errorf(
+				"while serializing %s %s/%s to JSON: %w",
+				cluster.GetObjectKind().GroupVersionKind().Kind,
+				cluster.GetNamespace(), cluster.GetName(),
+				err,
+			),
+		)
+	}
+
+	request := &reconciler.ReconcilerHooksRequest{
+		ClusterDefinition:  serializedCluster,
+		ResourceDefinition: serializedObject,
+	}
+
+	var kind reconciler.ReconcilerHooksCapability_Kind
+	switch cluster.GetObjectKind().GroupVersionKind().Kind {
+	case "Cluster":
+		kind = reconciler.ReconcilerHooksCapability_KIND_CLUSTER
+	case "Backup":
+		kind = reconciler.ReconcilerHooksCapability_KIND_BACKUP
+	default:
+		contextLogger.Info(
+			"Skipping reconciler hooks for unknown group",
+			"objectGvk", object.GetObjectKind())
+		return newContinueResult()
+	}
+
 	for idx := range plugins {
 		plugin := &plugins[idx]
 
-		if !slices.Contains(plugin.operatorCapabilities, capability) {
+		if !slices.Contains(plugin.reconcilerCapabilities, kind) {
 			continue
 		}
 
-		result, err := executeRequest(ctx, plugin.operatorClient, request)
+		result, err := executeRequest(ctx, plugin.reconcilerHooksClient, request)
 		if err != nil {
-			return ctrl.Result{}, err
+			return newReconcilerErrorResult(err)
 		}
 
-		if result.GetRequeueAfter() > 0 {
-			return ctrl.Result{RequeueAfter: time.Second * time.Duration(result.GetRequeueAfter())}, nil
-		}
-		if result.GetRequeue() {
-			return ctrl.Result{Requeue: true}, nil
+		switch result.Behavior {
+		case reconciler.ReconcilerHooksResult_BEHAVIOR_TERMINATE:
+			return newTerminateResult()
+
+		case reconciler.ReconcilerHooksResult_BEHAVIOR_REQUEUE:
+			return newReconcilerRequeueResult(result.GetRequeueAfter())
+
+		case reconciler.ReconcilerHooksResult_BEHAVIOR_CONTINUE:
+			return newContinueResult()
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return newContinueResult()
 }

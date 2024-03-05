@@ -20,7 +20,6 @@ package controllers
 import (
 	"context"
 
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apiv1 "github.com/cloudnative-pg/cloudnative-pg/api/v1"
@@ -56,38 +55,4 @@ func (r *ClusterReconciler) updatePluginsStatus(ctx context.Context, cluster *ap
 	}
 
 	return r.Client.Status().Patch(ctx, cluster, client.MergeFrom(oldCluster))
-}
-
-// preReconcilePluginHooks ensures we call the pre-reconcile plugin hooks
-func (r *ClusterReconciler) preReconcilePluginHooks(ctx context.Context, cluster *apiv1.Cluster) (ctrl.Result, error) {
-	contextLogger := log.FromContext(ctx)
-
-	// Load the plugins
-	pluginClient, err := cluster.LoadPluginClient(ctx)
-	if err != nil {
-		contextLogger.Error(err, "Error loading plugins, retrying")
-		return ctrl.Result{}, err
-	}
-	defer func() {
-		pluginClient.Close(ctx)
-	}()
-
-	return pluginClient.PreReconcile(ctx, cluster)
-}
-
-// postReconcilePluginHooks ensures we call the post-reconcile plugin hooks
-func (r *ClusterReconciler) postReconcilePluginHooks(ctx context.Context, cluster *apiv1.Cluster) (ctrl.Result, error) {
-	contextLogger := log.FromContext(ctx)
-
-	// Load the plugins
-	pluginClient, err := cluster.LoadPluginClient(ctx)
-	if err != nil {
-		contextLogger.Error(err, "Error loading plugins, retrying")
-		return ctrl.Result{}, err
-	}
-	defer func() {
-		pluginClient.Close(ctx)
-	}()
-
-	return pluginClient.PostReconcile(ctx, cluster)
 }
