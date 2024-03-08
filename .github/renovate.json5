@@ -47,6 +47,32 @@
       "versioningTemplate": "loose",
       "depNameTemplate": "github.com/goreleaser/goreleaser",
     }, {
+      // We want a PR to bump the external-snapshotter version
+      "fileMatch": [
+        "^.github/workflows/continuous-delivery.yml",
+        "^hack/setup-cluster\.sh$",
+      ],
+      "matchStrings": [
+        "EXTERNAL_SNAPSHOTTER_VERSION: \"(?<currentValue>.*?)\"",
+      ],
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose",
+      "depNameTemplate": "kubernetes-csi/external-snapshotter",
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)"
+    }, {
+      // We want a PR to bump the rook version
+      "fileMatch": [
+        "^.github/workflows/continuous-delivery.yml",
+      ],
+      "matchStrings": [
+        "ROOK_VERSION: \"(?<currentValue>.*?)\"",
+      ],
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose",
+      "depNameTemplate": "rook/rook",
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)"
+    }, {
+      // We want a PR to bump kind version
       "fileMatch": [
         "^.github/workflows/continuous-delivery.yml"
       ],
