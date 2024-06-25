@@ -816,7 +816,7 @@ jobs:
     steps:
       -
         name: Azure Login
-        uses: azure/login@v2.0.0
+        uses: azure/login@v2.1.1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       -
@@ -923,7 +923,7 @@ jobs:
           password: ${{ env.REGISTRY_PASSWORD }}
       -
         name: Azure Login
-        uses: azure/login@v2.0.0
+        uses: azure/login@v2.1.1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       -
@@ -1150,7 +1150,7 @@ jobs:
       -
         name: Azure Login
         if: always()
-        uses: azure/login@v2.0.0
+        uses: azure/login@v2.1.1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       -
@@ -2019,7 +2019,7 @@ jobs:
 
       - name: Compute the E2E test summary
         id: generate-summary
-        uses: cloudnative-pg/ciclops@v1.2.1
+        uses: cloudnative-pg/ciclops@v1.3.0
         with:
           artifact_directory: test-artifacts/data
 
