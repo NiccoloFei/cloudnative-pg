@@ -21,7 +21,7 @@ jobs:
     # once issue https://github.com/snok/container-retention-policy/issues/33 is fixed
     # we can merge the two steps into one
       - name: Delete '-testing' images for ${{ env.IMAGE_NAME }}
-        uses: snok/container-retention-policy@v2
+        uses: snok/container-retention-policy@b56f4ff7539c1f94f01e5dc726671cd619aa8072 # v2
         with:
           image-names: ${{ env.IMAGE_NAME }}
           cut-off: 5 days ago UTC
@@ -31,7 +31,7 @@ jobs:
           # use the GITHUB_TOKEN when issue https://github.com/snok/container-retention-policy/issues/27 is fixed
           token: ${{ env.SNOK_TOKEN }}
       - name: Delete '-testing' images for containers
-        uses: snok/container-retention-policy@v2
+        uses: snok/container-retention-policy@b56f4ff7539c1f94f01e5dc726671cd619aa8072 # v2
         with:
           image-names: ${{ env.CONTAINER_IMAGE_NAMES }}
           cut-off: A week ago UTC

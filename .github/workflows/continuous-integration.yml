@@ -55,7 +55,7 @@ jobs:
 
     steps:
       - name: Invoke workflow with inputs
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1
         with:
           workflow: continuous-integration
           ref: ${{ matrix.branch }}
@@ -71,7 +71,7 @@ jobs:
       should_skip: ${{ steps.skip_check.outputs.should_skip == 'true' && github.ref != 'refs/heads/main' }}
     steps:
       - id: skip_check
-        uses: fkirc/skip-duplicate-actions@v5.3.1
+        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf # v5.3.1
         with:
           concurrent_skipping: 'same_content'
           skip_after_successful_duplicate: 'true'
@@ -94,10 +94,10 @@ jobs:
       go-code-changed: ${{ steps.filter.outputs.go-code-changed }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Check for changes
-        uses: dorny/paths-filter@v3.0.2
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         # Remember to add new folders in the operator-changed filter if needed
         with:
@@ -145,10 +145,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
           # Disable setup-go caching. Cache is better handled by the golangci-lint action
           cache: false
@@ -156,7 +156,7 @@ jobs:
           check-latest: true
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@d6238b002a20823d52840fda27e2d4891c5952dc # v4
         with:
           version: ${{ env.GOLANGCI_LINT_VERSION }}
 
@@ -173,7 +173,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Run govulncheck
-        uses: golang/govulncheck-action@v1
+        uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1
         with:
           go-version-input: ${{ env.GOLANG_VERSION }}
           check-latest: true
@@ -192,10 +192,10 @@ jobs:
         SHELLCHECK_OPTS: -a -S style
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@2.0.0
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
 
   generate-unit-tests-jobs:
     name: Generate jobs for unit tests
@@ -215,7 +215,7 @@ jobs:
       latest_k8s_version: ${{ steps.get-k8s-versions.outputs.latest_k8s_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Get k8s versions for unit test
         id: get-k8s-versions
@@ -255,10 +255,10 @@ jobs:
         k8s-version: ${{ fromJSON(needs.generate-unit-tests-jobs.outputs.k8sMatrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
           check-latest: true
@@ -294,10 +294,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
           check-latest: true
@@ -329,10 +329,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
           check-latest: true
@@ -395,13 +395,13 @@ jobs:
       push: ${{ env.PUSH }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           # To identify the commit we need the history and all the tags.
           fetch-depth: 0
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
           check-latest: true
@@ -446,7 +446,7 @@ jobs:
           echo PWD=$(pwd) >> $GITHUB_ENV
 
       - name: Run GoReleaser to build kubectl plugin
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@5742e2a039330cbb23ebf35f046f814d4c6ff811 # v5
         if: |
           github.event_name == 'schedule' ||
           (
@@ -466,7 +466,7 @@ jobs:
       # Send Slack notification if the kubectl plugin build fails.
       # To avoid message overflow, we only report runs scheduled on main or release branches
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661 # v2
         if: |
           failure() &&
           github.repository_owner == env.REPOSITORY_OWNER &&
@@ -486,7 +486,7 @@ jobs:
           SLACK_MESSAGE: Building kubernetes plugin failed!
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@5742e2a039330cbb23ebf35f046f814d4c6ff811 # v5
         with:
           distribution: goreleaser
           version: latest
@@ -498,7 +498,7 @@ jobs:
 
       - name: Docker meta
         id: docker-meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         with:
           images: ${{ env.OPERATOR_IMAGE_NAME }}
           tags: |
@@ -507,7 +507,7 @@ jobs:
 
       - name: Docker meta UBI8
         id: docker-meta-ubi8
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         with:
           images: ${{ env.OPERATOR_IMAGE_NAME }}
           flavor: |
@@ -518,7 +518,7 @@ jobs:
 
       - name: Docker meta UBI9
         id: docker-meta-ubi9
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         with:
           images: ${{ env.OPERATOR_IMAGE_NAME }}
           flavor: |
@@ -528,22 +528,22 @@ jobs:
             type=ref,event=pr
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
         with:
           platforms: ${{ env.PLATFORMS }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
       - name: Login into docker registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ env.REGISTRY_USER }}
           password:  ${{ env.REGISTRY_PASSWORD }}
 
       - name: Build for scan distroless image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           platforms: "linux/amd64"
           context: .
@@ -555,7 +555,7 @@ jobs:
           tags: ${{ steps.docker-meta.outputs.tags }}
 
       - name: Dockle scan distroless image
-        uses: erzz/dockle-action@v1
+        uses: erzz/dockle-action@69369bc745ee29813f730231a821bcd4f71cd290 # v1
         with:
           image: ${{ steps.docker-meta.outputs.tags }}
           exit-code: '1'
@@ -563,7 +563,7 @@ jobs:
           accept-keywords: key
 
       - name: Build for scan UBI8 image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           platforms: "linux/amd64"
           context: .
@@ -575,7 +575,7 @@ jobs:
           tags: ${{ steps.docker-meta-ubi8.outputs.tags }}
 
       - name: Dockle scan UBI8 image
-        uses: erzz/dockle-action@v1
+        uses: erzz/dockle-action@69369bc745ee29813f730231a821bcd4f71cd290 # v1
         env:
           DOCKLE_IGNORES: CIS-DI-0009
         with:
@@ -585,7 +585,7 @@ jobs:
           accept-keywords: key
 
       - name: Build for scan UBI9 image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           platforms: "linux/amd64"
           context: .
@@ -597,7 +597,7 @@ jobs:
           tags: ${{ steps.docker-meta-ubi9.outputs.tags }}
 
       - name: Dockle scan UBI9 image
-        uses: erzz/dockle-action@v1
+        uses: erzz/dockle-action@69369bc745ee29813f730231a821bcd4f71cd290 # v1
         env:
           DOCKLE_IGNORES: CIS-DI-0009
         with:
@@ -619,7 +619,7 @@ jobs:
           args: --severity-threshold=high --file=Dockerfile
 
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@fca7ace96b7d713c7035871441bd52efbe39e27e # v3
         if: |
           !github.event.repository.fork && 
           !github.event.pull_request.head.repo.fork
@@ -628,7 +628,7 @@ jobs:
           sarif_file: snyk.sarif
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           platforms: ${{ env.PLATFORMS }}
           context: .
@@ -642,7 +642,7 @@ jobs:
           cache-to: ${{ env.BUILD_PUSH_CACHE_TO }}
 
       - name: Build and push UBI8
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           platforms: ${{ env.PLATFORMS }}
           context: .
@@ -653,7 +653,7 @@ jobs:
           tags: ${{ steps.docker-meta-ubi8.outputs.tags }}
 
       - name: Build and push UBI9
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
         with:
           platforms: ${{ env.PLATFORMS }}
           context: .
@@ -690,27 +690,27 @@ jobs:
       needs.buildx.outputs.push == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0
           ref: ${{ needs.buildx.outputs.commit }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
         with:
           platforms: ${{ env.PLATFORMS }}
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
           check-latest: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
       - name: Login to ghcr.io
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -725,7 +725,7 @@ jobs:
           make olm-catalog
 
       - name: Archive the bundle manifests
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: bundle
           path: |
@@ -746,31 +746,31 @@ jobs:
       github.repository_owner == 'cloudnative-pg'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: "Setting up KinD cluster"
-        uses: helm/kind-action@v1.9.0
+        uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
         with:
           wait: "600s"
           version: "v0.20.0"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
         with:
           platforms: ${{ env.PLATFORMS }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
       - name: Login to ghcr.io
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
           check-latest: true
@@ -803,20 +803,20 @@ jobs:
       OPP_RELEASE_INDEX_NAME: "catalog_tmp"
     steps:
       - name: Checkout community-operators
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           repository: k8s-operatorhub/community-operators
           persist-credentials: false
 
       - name: Login to ghcr.io
-        uses: redhat-actions/podman-login@v1
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download the bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: bundle
 
