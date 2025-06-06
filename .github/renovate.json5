@@ -157,6 +157,19 @@
       datasourceTemplate: 'docker',
       versioningTemplate: 'loose'
     },
+    {
+      customType: 'regex',
+      fileMatch: [
+        '^tests\\/utils\\/minio\\/minio\\.go$',
+      ],
+      matchStrings: [
+        'minioImage = "(?<depName>.+?):(?<currentValue>.*?)"\\n',
+        'minioClientImage = "(?<depName>.+?):(?<currentValue>.*?)"\\n',
+      ],
+      datasourceTemplate: 'docker',
+      versioningTemplate: 'regex',
+      extractVersionTemplate: '^RELEASE\\.(?<major>\\d+)-(?<minor>\\d+)-(?<patch>\\d+)T.*Z$',
+    },
   ],
   packageRules: [
     {
